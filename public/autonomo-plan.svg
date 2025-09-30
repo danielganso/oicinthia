@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <!-- Plano Autônomo com bonequinho -->
+  <circle cx="75" cy="75" r="60" fill="#EBF5FF" stroke="#3b82f6" stroke-width="2"/>
+  <circle cx="75" cy="75" r="50" fill="#DBEAFE" stroke="#3b82f6" stroke-width="0"/>
+  
+  <!-- Bonequinho (profissional autônomo) -->
+  <circle cx="75" cy="55" r="15" fill="#3b82f6"/>
+  <path d="M55,100 C55,80 95,80 95,100" fill="#3b82f6" stroke="none"/>
+  <rect x="65" y="70" width="20" height="30" fill="#3b82f6" rx="5" ry="5"/>
+</svg>

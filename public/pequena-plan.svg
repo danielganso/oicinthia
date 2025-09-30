@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <!-- Plano Clínica Pequena -->
+  <circle cx="75" cy="75" r="60" fill="#EBF5FF" stroke="#3b82f6" stroke-width="2"/>
+  <circle cx="75" cy="75" r="50" fill="#DBEAFE" stroke="#3b82f6" stroke-width="0"/>
+  
+  <!-- Clínica pequena (prédio pequeno) -->
+  <rect x="50" y="45" width="50" height="50" fill="#3b82f6" rx="3" ry="3"/>
+  <rect x="60" y="55" width="10" height="10" fill="#DBEAFE" rx="1" ry="1"/>
+  <rect x="80" y="55" width="10" height="10" fill="#DBEAFE" rx="1" ry="1"/>
+  <rect x="60" y="75" width="10" height="20" fill="#DBEAFE" rx="1" ry="1"/>
+  <rect x="80" y="75" width="10" height="10" fill="#DBEAFE" rx="1" ry="1"/>
+</svg>

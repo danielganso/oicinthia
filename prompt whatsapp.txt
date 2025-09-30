@@ -1,0 +1,225 @@
+Segue um prompt pronto para o Trae implementar o vínculo com a Evolution API quando o usuário clicar no botão “Vincular WhatsApp”. Ajustei para Next.js (frontend) + API interna (route handler) e persistência no Supabase. Inclui criação de instância, geração de QR, configuração do webhook de teste, ignorar grupos e habilitar os eventos message.upsert e message.send.
+
+Prompt para o Trae — Vincular WhatsApp (Evolution API)
+
+Contexto
+Implementar fluxo “Vincular WhatsApp” no Dashboard da CinthIA (Next.js + Tailwind). Quando o usuário clicar no botão, criar uma nova instância na Evolution API, configurar webhook de teste, ignorar grupos, habilitar eventos de message upsert e message send, exibir QR Code em um modal e atualizar status quando o dispositivo conectar. Persistir no Supabase na tabela professionals (campos: id, owner_user_id, public_code, whatsapp_device_id, status, updated_at, etc.).
+
+Tecnologias
+
+Frontend: Next.js + Tailwind (dashboard)
+
+Backend: API Routes (Next.js) ou Express (ok usar API Routes)
+
+Banco: Supabase (Postgres) via REST Admin (chave service role em server-side)
+
+Integração: Evolution API (REST)
+
+Estado UI: Modal para QR Code, polling a cada 3s para status
+
+Env Vars (server-side)
+
+EVOLUTION_API_BASE (ex: https://evolution-api.meu-dominio.com)
+
+EVOLUTION_API_KEY (Bearer ou header específico da Evolution)
+
+SUPABASE_URL
+
+SUPABASE_SERVICE_ROLE
+
+Assunções de endpoints Evolution (padronizar nomes)
+
+Se sua Evolution usa endpoints diferentes, adequar nomes mantendo a mesma lógica.
+
+Criar instância: POST {EVOLUTION_API_BASE}/instances
+
+Body: { "name": "<slug_uniq>", "ignoreGroups": true, "webhook": { "url": "https://n8n.tripos.com.br/webhook-test/63141839-696d-4e26-86e0-44f1f91137c6", "events": ["message.upsert","message.send"] } }
+
+Obter QR: GET {EVOLUTION_API_BASE}/instances/{instanceKey}/qr
+
+Ver status/infos: GET {EVOLUTION_API_BASE}/instances/{instanceKey}/status
+
+(Se precisar setar webhook/opções separadamente:)
+
+POST {EVOLUTION_API_BASE}/instances/{instanceKey}/webhook
+Body: { "url": "<webhook-url>", "events": ["message.upsert","message.send"] }
+
+PATCH {EVOLUTION_API_BASE}/instances/{instanceKey}/settings
+Body: { "ignoreGroups": true }
+
+Headers padrão para Evolution:
+Authorization: Bearer ${EVOLUTION_API_KEY}
+Content-Type: application/json
+
+Requisitos de UX
+
+Botão “Vincular WhatsApp” na página do profissional (/dashboard/profissionais/[id]).
+
+Ao clicar:
+
+Chamar POST /api/evolution/link com professionalId.
+
+API cria instância (se não existir), configura webhook + ignore groups + eventos, retorna instanceKey e a imagem QR (base64).
+
+Abrir Modal com QR.
+
+Iniciar polling GET /api/evolution/status?professionalId=... a cada 3s; quando connected = true, fechar modal e exibir “Conectado”.
+
+Persistir em professionals.whatsapp_device_id = instanceKey e status='active' quando conectar.
+
+Tratar erros com toasts e fallback (ex.: “Tente novamente”, “Contate o suporte”).
+
+API Routes (Next.js) — Especificação
+POST /api/evolution/link
+
+Input (JSON): { "professionalId": "uuid" }
+Passos:
+
+Validar autenticação (usuário logado) e autorização (owner do professionalId).
+
+Buscar profissional no Supabase. Se já existir whatsapp_device_id, retornar status atual e QR (se ainda não conectado).
+
+Criar instância na Evolution (se necessário):
+
+POST /instances com:
+
+{
+  "name": "<public_code ou slug-uniq>",
+  "ignoreGroups": true,
+  "webhook": {
+    "url": "https://n8n.tripos.com.br/webhook-test/63141839-696d-4e26-86e0-44f1f91137c6",
+    "events": ["message.upsert","message.send"]
+  }
+}
+
+
+Capturar instanceKey retornado.
+
+(Fallback caso API exija passos separados)
+
+PATCH /instances/{instanceKey}/settings → { "ignoreGroups": true }
+
+POST /instances/{instanceKey}/webhook → { "url": "...", "events": ["message.upsert","message.send"] }
+
+Atualizar Supabase: professionals.whatsapp_device_id = instanceKey.
+
+Buscar QR: GET /instances/{instanceKey}/qr → retornar qrImage (base64 ou dataURL).
+
+Responder { instanceKey, qrImage }.
+
+Erros:
+
+400 se professionalId inválido
+
+403 se o usuário não for dono do profissional
+
+502 se falha na Evolution
+
+500 genéricos
+
+GET /api/evolution/status?professionalId=...
+
+Passos:
+
+Validar auth/ownership.
+
+Ler whatsapp_device_id do profissional.
+
+GET /instances/{instanceKey}/status na Evolution.
+
+Normalizar payload:
+
+connected: boolean
+
+state: ex.: open, connected, qr, etc.
+
+lastSeen (opcional)
+
+Responder { connected, state }.
+
+Frontend (Next.js) — Especificação
+Componente “VincularWhatsAppButton”
+
+Props: professionalId
+
+Ações:
+
+onClick → POST /api/evolution/link
+
+Abrir Modal com qrImage retornado
+
+Iniciar polling:
+
+a cada 3s: GET /api/evolution/status?professionalId=...
+
+se connected === true → fechar modal, mostrar toast “Conectado!”
+
+Modal “WhatsApp QR”
+
+Exibe imagem QR (base64/data URL)
+
+Texto de instrução: “Abra o WhatsApp → Aparelhos conectados → Conectar um aparelho → aponte a câmera para este QR”
+
+Mostra indicador de status (ex.: state)
+
+Persistência (Supabase)
+
+Tabela: professionals
+
+Atualizar whatsapp_device_id com instanceKey ao criar
+
+Opcional: wa_connected_at timestamptz quando connected = true
+
+status → manter active/inactive para controle interno
+
+Regras RLS
+
+Permitir SELECT/UPDATE no professional apenas se owner_user_id = auth.uid().
+
+Pseudocódigo dos Handlers (resumo)
+
+POST /api/evolution/link
+
+validarUser()
+prof = getProfessional(professionalId)
+assert(owner == user)
+
+if (!prof.whatsapp_device_id) {
+  instanceKey = createInstance(name=prof.public_code, ignoreGroups=true, webhook={url: <n8n webhook>, events: ["message.upsert","message.send"]})
+  save(prof.whatsapp_device_id = instanceKey)
+} else {
+  instanceKey = prof.whatsapp_device_id
+}
+
+qrImage = getQr(instanceKey)
+return { instanceKey, qrImage }
+
+
+GET /api/evolution/status
+
+validarUser()
+prof = getProfessional(professionalId)
+instanceKey = prof.whatsapp_device_id
+status = getInstanceStatus(instanceKey)
+// conectar: status.connected == true
+return { connected: status.connected, state: status.state }
+
+Testes
+
+Clicar em Vincular WhatsApp → abre modal com QR.
+
+Ler QR no app do WhatsApp → modal fecha automaticamente em até ~10s (poll de 3s).
+
+Verificar no DB que whatsapp_device_id foi salvo.
+
+Mandar mensagem de teste para o número vinculado e validar que o webhook de teste do n8n recebeu (URL fornecida).
+
+Observações
+
+Se a Evolution exigir “nome da instância único”, usar professional.public_code + sufixo aleatório (ex.: PRF-8X2K1-20250924).
+
+Se a Evolution retornar QR como payload de SVG/PNG/BASE64, renderizar direto no modal.
+
+Garantir timeout e retries nas chamadas Evolution (ex.: 5s timeout, 2 tentativas).
+
+Logar erros de rede no servidor e exibir mensagem amigável na UI.

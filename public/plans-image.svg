@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200">
+  <!-- Plano Básico -->
+  <rect x="20" y="20" width="100" height="160" rx="10" ry="10" fill="#f0f9ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="70" y="50" font-family="Arial" font-size="14" fill="#1e3a8a" text-anchor="middle" font-weight="bold">Autônomo</text>
+  <text x="70" y="80" font-family="Arial" font-size="18" fill="#3b82f6" text-anchor="middle" font-weight="bold">R$ 97</text>
+  <text x="70" y="100" font-family="Arial" font-size="12" fill="#64748b" text-anchor="middle">/mês</text>
+  <line x1="30" y1="110" x2="110" y2="110" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="70" y="130" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">1 profissional</text>
+  <text x="70" y="150" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">Sem limite</text>
+  <text x="70" y="170" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">de pacientes</text>
+  
+  <!-- Plano Intermediário -->
+  <rect x="150" y="20" width="100" height="160" rx="10" ry="10" fill="#f0f9ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="200" y="50" font-family="Arial" font-size="14" fill="#1e3a8a" text-anchor="middle" font-weight="bold">Até 3</text>
+  <text x="200" y="80" font-family="Arial" font-size="18" fill="#3b82f6" text-anchor="middle" font-weight="bold">R$ 197</text>
+  <text x="200" y="100" font-family="Arial" font-size="12" fill="#64748b" text-anchor="middle">/mês</text>
+  <line x1="160" y1="110" x2="240" y2="110" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="200" y="130" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">Até 3 profissionais</text>
+  <text x="200" y="150" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">Sem limite</text>
+  <text x="200" y="170" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">de pacientes</text>
+  
+  <!-- Plano Avançado -->
+  <rect x="280" y="20" width="100" height="160" rx="10" ry="10" fill="#f0f9ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="330" y="50" font-family="Arial" font-size="14" fill="#1e3a8a" text-anchor="middle" font-weight="bold">Até 5</text>
+  <text x="330" y="80" font-family="Arial" font-size="18" fill="#3b82f6" text-anchor="middle" font-weight="bold">R$ 297</text>
+  <text x="330" y="100" font-family="Arial" font-size="12" fill="#64748b" text-anchor="middle">/mês</text>
+  <line x1="290" y1="110" x2="370" y2="110" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="330" y="130" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">Até 5 profissionais</text>
+  <text x="330" y="150" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">Sem limite</text>
+  <text x="330" y="170" font-family="Arial" font-size="12" fill="#1e3a8a" text-anchor="middle">de pacientes</text>
+</svg>

@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 30, 41, 59; /* text-slate-800 */
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 241, 245, 249; /* bg-slate-100 */
+  --primary-color: 37, 99, 235; /* blue-600 */
+  --secondary-color: 96, 165, 250; /* blue-400 */
+  --accent-color: 251, 191, 36; /* amber-400 */
+}
+
+/* Removendo a configuração de modo escuro para evitar problemas com fontes brancas */
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
