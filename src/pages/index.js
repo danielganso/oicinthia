@@ -74,23 +74,64 @@ function FAQSection() {
 }
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-amber-50">
       <Head>
-        <title>CinthIA - Atendente Virtual para Clínicas Odontológicas</title>
-        <meta name="description" content="Automatize o agendamento de consultas via WhatsApp para sua clínica odontológica" />
+        <title>CinthIA - Atendente Virtual para Profissionais de Saúde</title>
+        <meta name="description" content="Automatize o agendamento de consultas via WhatsApp para seus atendimentos" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <header className="container mx-auto px-4 py-6 flex justify-between items-center bg-white shadow-sm rounded-lg my-2">
-        <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 text-transparent bg-clip-text">CinthIA</div>
-        <nav>
-          <ul className="flex space-x-6">
-            <li><a href="#como-funciona" className="text-blue-700 hover:text-amber-500 transition-colors duration-300">Como Funciona</a></li>
-            <li><a href="#funcionalidades" className="text-blue-700 hover:text-amber-500 transition-colors duration-300">Funcionalidades</a></li>
-            <li><a href="#planos" className="text-blue-700 hover:text-amber-500 transition-colors duration-300">Planos</a></li>
-            <li><a href="#faq" className="text-blue-700 hover:text-amber-500 transition-colors duration-300">FAQ</a></li>
-            <li><Link href="/login" className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white py-2 px-4 rounded-lg transition-all duration-300">Login</Link></li>
+      {/* Header Responsivo */}
+      <header className="container mx-auto px-4 py-4 bg-white shadow-sm rounded-lg my-2">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="Logo CinthIA" 
+              className="h-12 md:h-16 w-auto max-w-none" 
+              style={{display: 'block'}}
+            />
+          </div>
+          
+          {/* Menu Desktop */}
+          <nav className="hidden md:block">
+            <ul className="flex space-x-6">
+              <li><a href="#como-funciona" className="text-blue-700 hover:text-amber-500 transition-colors duration-300">Como Funciona</a></li>
+              <li><a href="#funcionalidades" className="text-blue-700 hover:text-amber-500 transition-colors duration-300">Funcionalidades</a></li>
+              <li><a href="#planos" className="text-blue-700 hover:text-amber-500 transition-colors duration-300">Planos</a></li>
+              <li><a href="#faq" className="text-blue-700 hover:text-amber-500 transition-colors duration-300">FAQ</a></li>
+              <li><Link href="/login" className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white py-2 px-4 rounded-lg transition-all duration-300">Login</Link></li>
+            </ul>
+          </nav>
+
+          {/* Botão Login Mobile + Menu Mobile */}
+          <div className="md:hidden flex items-center space-x-3">
+            <Link href="/login" className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white py-2 px-3 rounded-lg transition-all duration-300 text-sm font-medium">
+              Login
+            </Link>
+            <button 
+              className="flex flex-col space-y-1 p-2"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Menu"
+            >
+              <span className={`block w-6 h-0.5 bg-blue-700 transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`}></span>
+              <span className={`block w-6 h-0.5 bg-blue-700 transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`}></span>
+              <span className={`block w-6 h-0.5 bg-blue-700 transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
+            </button>
+          </div>
+        </div>
+
+        {/* Menu Mobile */}
+        <nav className={`md:hidden mt-4 ${mobileMenuOpen ? 'block' : 'hidden'}`}>
+          <ul className="flex flex-col space-y-3 pb-4">
+            <li><a href="#como-funciona" className="block text-blue-700 hover:text-amber-500 transition-colors duration-300 py-2">Como Funciona</a></li>
+            <li><a href="#funcionalidades" className="block text-blue-700 hover:text-amber-500 transition-colors duration-300 py-2">Funcionalidades</a></li>
+            <li><a href="#planos" className="block text-blue-700 hover:text-amber-500 transition-colors duration-300 py-2">Planos</a></li>
+            <li><a href="#faq" className="block text-blue-700 hover:text-amber-500 transition-colors duration-300 py-2">FAQ</a></li>
           </ul>
         </nav>
       </header>
@@ -367,7 +408,9 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
             <div>
-              <h3 className="text-2xl font-bold mb-4 text-amber-400">CinthIA</h3>
+              <div className="flex items-center mb-4">
+                <img src="/logo.png" alt="CinthIA" className="h-12 w-auto max-w-none" style={{display: 'block'}} />
+              </div>
               <p className="text-blue-100">Atendente virtual para clínicas odontológicas.</p>
             </div>
             <div>

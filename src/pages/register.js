@@ -8,10 +8,14 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [cnpj, setCnpj] = useState('');
+  const [telefone, setTelefone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [plan, setPlan] = useState('autonomo');
+  const [userType, setUserType] = useState('pessoa_fisica'); // pessoa_fisica ou pessoa_juridica
   const router = useRouter();
 
   useEffect(() => {
@@ -20,6 +24,33 @@ export default function Register() {
       setPlan(router.query.plan);
     }
   }, [router.query]);
+
+  // Função para formatar CPF
+  const formatCPF = (value) => {
+    const cleanValue = value.replace(/\D/g, '');
+    if (cleanValue.length <= 11) {
+      return cleanValue.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+    return cleanValue.slice(0, 11).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
+
+  // Função para formatar CNPJ
+  const formatCNPJ = (value) => {
+    const cleanValue = value.replace(/\D/g, '');
+    if (cleanValue.length <= 14) {
+      return cleanValue.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    return cleanValue.slice(0, 14).replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  };
+
+  // Função para formatar telefone
+  const formatPhone = (value) => {
+    const cleanValue = value.replace(/\D/g, '');
+    if (cleanValue.length <= 11) {
+      return cleanValue.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    }
+    return cleanValue.slice(0, 11).replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -53,6 +84,10 @@ export default function Register() {
             plan: plan,
             status: 'test',
             current_period_end: trialEndDate.toISOString(),
+            nome: name, // Adicionando o nome na tabela subscriptions
+            cpf: userType === 'pessoa_fisica' ? cpf.replace(/\D/g, '') : null,
+            cnpj: userType === 'pessoa_juridica' ? cnpj.replace(/\D/g, '') : null,
+            telefone: telefone.replace(/\D/g, ''),
           }
         ]);
 
@@ -75,6 +110,11 @@ export default function Register() {
       </Head>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img src="/logo.png" alt="CinthIA" className="h-16 w-auto max-w-none" style={{display: 'block'}} />
+        </div>
+        
         <h2 className="text-center text-3xl font-extrabold text-blue-900">
           Crie sua conta
         </h2>
@@ -104,9 +144,40 @@ export default function Register() {
           )}
 
           <form className="space-y-6" onSubmit={handleRegister}>
+            {/* Tipo de usuário */}
+            <div>
+              <label className="block text-sm font-medium text-blue-800 mb-3">
+                Tipo de cadastro
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="userType"
+                    value="pessoa_fisica"
+                    checked={userType === 'pessoa_fisica'}
+                    onChange={(e) => setUserType(e.target.value)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300"
+                  />
+                  <span className="ml-2 text-sm text-blue-800">Pessoa Física</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="userType"
+                    value="pessoa_juridica"
+                    checked={userType === 'pessoa_juridica'}
+                    onChange={(e) => setUserType(e.target.value)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-blue-300"
+                  />
+                  <span className="ml-2 text-sm text-blue-800">Pessoa Jurídica</span>
+                </label>
+              </div>
+            </div>
+
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-blue-800">
-                Nome
+                Nome {userType === 'pessoa_juridica' ? 'da Empresa' : 'Completo'}
               </label>
               <div className="mt-1">
                 <input
@@ -118,9 +189,51 @@ export default function Register() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-blue-200 rounded-md shadow-sm placeholder-blue-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-blue-900"
+                  placeholder={userType === 'pessoa_juridica' ? 'Nome da empresa' : 'Seu nome completo'}
                 />
               </div>
             </div>
+
+            {/* CPF ou CNPJ baseado no tipo de usuário */}
+            {userType === 'pessoa_fisica' ? (
+              <div>
+                <label htmlFor="cpf" className="block text-sm font-medium text-blue-800">
+                  CPF
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="cpf"
+                    name="cpf"
+                    type="text"
+                    required
+                    value={cpf}
+                    onChange={(e) => setCpf(formatCPF(e.target.value))}
+                    className="appearance-none block w-full px-3 py-2 border border-blue-200 rounded-md shadow-sm placeholder-blue-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-blue-900"
+                    placeholder="000.000.000-00"
+                    maxLength="14"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <label htmlFor="cnpj" className="block text-sm font-medium text-blue-800">
+                  CNPJ
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="cnpj"
+                    name="cnpj"
+                    type="text"
+                    required
+                    value={cnpj}
+                    onChange={(e) => setCnpj(formatCNPJ(e.target.value))}
+                    className="appearance-none block w-full px-3 py-2 border border-blue-200 rounded-md shadow-sm placeholder-blue-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-blue-900"
+                    placeholder="00.000.000/0000-00"
+                    maxLength="18"
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-blue-800">
@@ -136,13 +249,33 @@ export default function Register() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-blue-200 rounded-md shadow-sm placeholder-blue-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-blue-900"
+                  placeholder="seu@email.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="telefone" className="block text-sm font-medium text-blue-800">
+                Telefone/WhatsApp
+              </label>
+              <div className="mt-1">
+                <input
+                  id="telefone"
+                  name="telefone"
+                  type="tel"
+                  required
+                  value={telefone}
+                  onChange={(e) => setTelefone(formatPhone(e.target.value))}
+                  className="appearance-none block w-full px-3 py-2 border border-blue-200 rounded-md shadow-sm placeholder-blue-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-blue-900"
+                  placeholder="(11) 99999-9999"
+                  maxLength="15"
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-blue-800">
-                Telefone/WhatsApp
+                Telefone Adicional (opcional)
               </label>
               <div className="mt-1">
                 <input
@@ -150,10 +283,10 @@ export default function Register() {
                   name="phone"
                   type="tel"
                   autoComplete="tel"
-                  required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-blue-200 rounded-md shadow-sm placeholder-blue-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-blue-900"
+                  placeholder="Telefone adicional"
                 />
               </div>
             </div>

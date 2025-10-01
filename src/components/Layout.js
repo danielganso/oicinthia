@@ -55,8 +55,8 @@ export default function Layout({ children, title = 'Dashboard' }) {
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
         <div className="flex-1 flex flex-col min-h-0 bg-blue-700">
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
-              <div className="flex items-center flex-shrink-0 px-4">
-                <span className="text-white text-2xl font-bold">CinthIA</span>
+              <div className="flex items-center flex-shrink-0 px-4 py-4 bg-white justify-start">
+                <img src="/logo.png" alt="CinthIA" className="h-12 w-auto max-w-none" style={{display: 'block'}} />
               </div>
               <nav className="mt-5 flex-1 px-2 space-y-1">
                 <Link href="/dashboard" className={`${
@@ -136,7 +136,9 @@ export default function Layout({ children, title = 'Dashboard' }) {
       {/* Mobile menu */}
       <div className="md:hidden">
         <div className="bg-blue-700 px-4 py-2 flex items-center justify-between">
-            <span className="text-white text-xl font-bold">CinthIA</span>
+            <div className="bg-white px-3 py-2 rounded mr-auto">
+              <img src="/logo.png" alt="CinthIA" className="h-10 w-auto max-w-none" style={{display: 'block'}} />
+            </div>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="text-white hover:bg-blue-600 p-2 rounded-md transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"

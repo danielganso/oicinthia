@@ -169,23 +169,62 @@ export default function Subscriptions() {
         return;
       }
 
-      // Criar preferência de pagamento no Mercado Pago
+      console.log('=== INICIANDO CRIAÇÃO DE ASSINATURA ===');
+      console.log('PlanId selecionado:', planId);
+
+      // Criar preferência de pagamento via API route
       const userInfo = {
         id: user.id,
         email: user.email,
         name: user.user_metadata?.name || user.email
       };
 
-      const preference = await createSubscriptionPreference(planId, userInfo);
+      // Buscar informações do plano
+      const { PLAN_CONFIGS } = await import('../../lib/mercadopago');
+      const planInfo = PLAN_CONFIGS[planId];
       
+      if (!planInfo) {
+        console.error('Plano não encontrado:', planId);
+        return;
+      }
+
+      console.log('UserInfo:', userInfo);
+      console.log('PlanInfo:', planInfo);
+
+      // Chamar API route para criar assinatura
+      const response = await fetch('/api/mercadopago/create-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userInfo,
+          planInfo
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Erro na API:', errorData);
+        throw new Error(errorData.message || 'Erro ao criar assinatura');
+      }
+
+      const data = await response.json();
+      console.log('=== RESPOSTA DA API ===');
+      console.log('Data:', data);
+
       // Redirecionar para o checkout do Mercado Pago
-      if (preference.init_point) {
-        window.location.href = preference.init_point;
+      if (data.subscription && data.subscription.init_point) {
+        console.log('Redirecionando para:', data.subscription.init_point);
+        window.location.href = data.subscription.init_point;
       } else {
-        console.error('URL de checkout não encontrada na preferência');
+        console.error('URL de checkout não encontrada na resposta:', data);
+        throw new Error('URL de checkout não encontrada');
       }
     } catch (error) {
-      console.error('Erro ao processar seleção de plano:', error);
+      console.error('=== ERRO AO PROCESSAR SELEÇÃO DE PLANO ===');
+      console.error('Error:', error);
+      console.error('Stack:', error.stack);
       // TODO: Mostrar mensagem de erro para o usuário
     }
   };

@@ -39,67 +39,107 @@ const PLAN_CONFIGS = {
   }
 };
 
-// Função para criar preferência de assinatura
+// Função para criar assinatura (preapproval) - CORRIGIDA conforme documentação oficial
 export async function createSubscriptionPreference(userInfo, planInfo) {
   try {
-    const preference = {
-      items: [
-        {
-          title: `Assinatura ${planInfo.name}`,
-          description: `Plano ${planInfo.name} - ${planInfo.features.join(', ')}`,
-          quantity: 1,
-          currency_id: 'BRL',
-          unit_price: planInfo.price
-        }
-      ],
-      payer: {
-        name: userInfo.name,
-        email: userInfo.email,
-        identification: {
-          type: 'CPF',
-          number: userInfo.cpf || '00000000000'
-        }
-      },
-      back_urls: {
-        success: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/subscriptions?status=success`,
-        failure: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/subscriptions?status=failure`,
-        pending: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/subscriptions?status=pending`
-      },
-      auto_return: 'approved',
-      notification_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/webhooks/mercadopago`,
+    console.log('=== INICIANDO CRIAÇÃO DE ASSINATURA ===');
+    console.log('UserInfo:', userInfo);
+    console.log('PlanInfo:', planInfo);
+    console.log('Access Token:', MERCADOPAGO_CONFIG.accessToken ? 'Configurado' : 'NÃO CONFIGURADO');
+
+    // Verificar se estamos em ambiente de teste
+    const isTestEnvironment = MERCADOPAGO_CONFIG.accessToken.includes('TEST-');
+    console.log('Ambiente de teste:', isTestEnvironment);
+
+    // Estrutura correta para assinaturas recorrentes usando preapproval
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    console.log('=== DEBUG BASE URL ===');
+    console.log('NEXT_PUBLIC_BASE_URL from env:', process.env.NEXT_PUBLIC_BASE_URL);
+    console.log('baseUrl final:', baseUrl);
+    
+    // URL de retorno após pagamento - usando URL válida para teste
+    const backUrl = 'https://www.oicinthia.com.br/dashboard';
+    console.log('=== DEBUG BACK_URL (HARDCODED) ===');
+    console.log('back_url construída:', backUrl);
+    console.log('back_url length:', backUrl.length);
+    console.log('back_url type:', typeof backUrl);
+    
+    // URL do webhook para notificações
+    const notificationUrl = `${baseUrl}/api/mercadopago/webhook`;
+    console.log('=== DEBUG NOTIFICATION_URL ===');
+    console.log('notification_url:', notificationUrl);
+    
+    const preapproval = {
+      reason: `Assinatura ${planInfo.name}`,
       external_reference: `user_${userInfo.id}_plan_${planInfo.id}`,
-      metadata: {
-        user_id: userInfo.id,
-        plan_id: planInfo.id,
-        plan_name: planInfo.name
+      payer_email: userInfo.email,
+      back_url: backUrl,
+      notification_url: notificationUrl,
+      auto_recurring: {
+        frequency: planInfo.frequency || 1,
+        frequency_type: planInfo.frequency_type || 'months',
+        start_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Começar amanhã
+        transaction_amount: planInfo.price,
+        currency_id: 'BRL'
       }
     };
 
-    const response = await fetch(`${MERCADOPAGO_CONFIG.baseUrl}/checkout/preferences`, {
+    console.log('=== DADOS DA ASSINATURA ===');
+    console.log('Preapproval object:', JSON.stringify(preapproval, null, 2));
+    console.log('URL da API:', `${MERCADOPAGO_CONFIG.baseUrl}/preapproval`);
+
+    const response = await fetch(`${MERCADOPAGO_CONFIG.baseUrl}/preapproval`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${MERCADOPAGO_CONFIG.accessToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(preference)
+      body: JSON.stringify(preapproval)
     });
 
+    console.log('=== RESPOSTA DA API ===');
+    console.log('Status:', response.status);
+    console.log('Headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
-      throw new Error(`Erro na API do Mercado Pago: ${response.status}`);
+      const errorText = await response.text();
+      console.error('=== ERRO NA API DO MERCADO PAGO ===');
+      console.error('Status:', response.status);
+      console.error('Response:', errorText);
+      
+      // Tentar parsear o erro JSON se possível
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('Error JSON:', JSON.stringify(errorJson, null, 2));
+      } catch (e) {
+        console.error('Erro não é JSON válido');
+      }
+      
+      throw new Error(`Erro na API do Mercado Pago: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('=== ASSINATURA CRIADA COM SUCESSO ===');
+    console.log('Response data:', JSON.stringify(data, null, 2));
+    
+    // Verificar se temos o init_point correto
+    if (data.init_point) {
+      console.log('Init point encontrado:', data.init_point);
+    } else if (data.sandbox_init_point) {
+      console.log('Sandbox init point encontrado:', data.sandbox_init_point);
+    } else {
+      console.warn('Nenhum init point encontrado na resposta');
+    }
+
     return data;
 
   } catch (error) {
-    console.error('Erro ao criar preferência:', error);
+    console.error('=== ERRO AO CRIAR ASSINATURA ===');
+    console.error('Error:', error);
+    console.error('Stack:', error.stack);
     
-    // Retorna uma preferência simulada para desenvolvimento
-    return {
-      id: 'simulated-preference-id',
-      init_point: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=simulated-preference-id',
-      sandbox_init_point: 'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=simulated-preference-id'
-    };
+    // Em caso de erro, não retornar simulação - deixar o erro aparecer
+    throw error;
   }
 }
 

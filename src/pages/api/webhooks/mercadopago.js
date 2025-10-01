@@ -28,6 +28,23 @@ export default async function handler(req, res) {
       }
     }
 
+    // Verificar se é uma notificação de assinatura (preapproval)
+    if (webhookData.type === 'subscription_preapproval') {
+      const preapprovalId = webhookData.data.id;
+      console.log('Notificação de assinatura recebida:', preapprovalId);
+      
+      // Buscar informações da assinatura
+      const preapprovalInfo = await getPreapprovalInfo(preapprovalId);
+      console.log('Informações da assinatura:', preapprovalInfo);
+
+      // Processar baseado no status da assinatura
+      if (preapprovalInfo.status === 'authorized') {
+        await handleAuthorizedSubscription(preapprovalInfo);
+      } else if (preapprovalInfo.status === 'cancelled') {
+        await handleCancelledSubscription(preapprovalInfo);
+      }
+    }
+
     // Processar o webhook
     const result = await processWebhook(webhookData);
     
@@ -117,24 +134,109 @@ async function handleRejectedPayment(paymentInfo) {
 }
 
 /**
- * Processa pagamento pendente
+ * Processa assinatura autorizada
  */
-async function handlePendingPayment(paymentInfo) {
+async function handleAuthorizedSubscription(preapprovalInfo) {
   try {
-    const { metadata } = paymentInfo;
+    const { external_reference } = preapprovalInfo;
     
-    if (!metadata || !metadata.user_id) {
-      console.error('Metadados incompletos no pagamento pendente:', paymentInfo);
+    // Extrair user_id e plan_id da external_reference
+    const match = external_reference.match(/user_(\w+)_plan_(\w+)/);
+    if (!match) {
+      console.error('External reference inválida:', external_reference);
       return;
     }
 
-    console.log('Pagamento pendente para usuário:', metadata.user_id);
+    const userId = match[1];
+    const planId = match[2];
 
-    // TODO: Notificar usuário sobre pagamento pendente
-    // TODO: Registrar status pendente
+    // Atualizar a assinatura do usuário no banco de dados
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .upsert({
+        owner_user_id: userId,
+        plan: planId,
+        status: 'active',
+        current_period_start: new Date().toISOString(),
+        current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 dias
+        mercadopago_preapproval_id: preapprovalInfo.id,
+        mercadopago_external_reference: external_reference,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'owner_user_id'
+      });
+
+    if (error) {
+      console.error('Erro ao atualizar assinatura:', error);
+      throw error;
+    }
+
+    console.log('Assinatura ativada com sucesso para usuário:', userId);
 
   } catch (error) {
-    console.error('Erro ao processar pagamento pendente:', error);
+    console.error('Erro ao processar assinatura autorizada:', error);
+    throw error;
+  }
+}
+
+/**
+ * Processa assinatura cancelada
+ */
+async function handleCancelledSubscription(preapprovalInfo) {
+  try {
+    const { external_reference } = preapprovalInfo;
+    
+    // Extrair user_id da external_reference
+    const match = external_reference.match(/user_(\w+)_plan_(\w+)/);
+    if (!match) {
+      console.error('External reference inválida:', external_reference);
+      return;
+    }
+
+    const userId = match[1];
+
+    // Cancelar a assinatura do usuário no banco de dados
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'cancelled',
+        updated_at: new Date().toISOString()
+      })
+      .eq('owner_user_id', userId);
+
+    if (error) {
+      console.error('Erro ao cancelar assinatura:', error);
+      throw error;
+    }
+
+    console.log('Assinatura cancelada para usuário:', userId);
+
+  } catch (error) {
+    console.error('Erro ao processar cancelamento de assinatura:', error);
+    throw error;
+  }
+}
+
+/**
+ * Busca informações da assinatura (preapproval)
+ */
+async function getPreapprovalInfo(preapprovalId) {
+  try {
+    const response = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar assinatura: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro ao buscar informações da assinatura:', error);
     throw error;
   }
 }
