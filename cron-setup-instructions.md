@@ -28,11 +28,8 @@
 # Editar crontab
 crontab -e
 
-# Adicionar linha para executar a cada hora
-0 * * * * curl -X POST -H "Authorization: Bearer cron_secret_2024_cinthia_app_secure_key_xyz789" https://oicinthia.com.br/api/cron/update-subscriptions >> /var/log/cron-subscriptions.log 2>&1
-
 # Ou a cada 30 minutos
-*/30 * * * * curl -X POST -H "Authorization: Bearer cron_secret_2024_cinthia_app_secure_key_xyz789" https://oicinthia.com.br/api/cron/update-subscriptions >> /var/log/cron-subscriptions.log 2>&1
+0 */12 * * * curl -X POST -H "Authorization: Bearer cron_secret_2024_cinthia_app_secure_key_xyz78965156161484966" https://oicinthia.com.br/api/cron/update-subscriptions >> /var/log/cron-subscriptions.log 2>&1
 ```
 
 #### 2. Verificar Logs
