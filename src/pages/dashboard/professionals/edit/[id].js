@@ -38,19 +38,112 @@ export default function EditProfessional() {
   const [customSpecialty, setCustomSpecialty] = useState('');
 
   const specialties = [
+    // Área Médica (Médicos especialistas)
     'Clínico Geral',
+    'Pediatra',
+    'Geriatra',
+    'Ginecologista',
+    'Obstetra',
+    'Mastologista',
+    'Urologista',
+    'Cardiologista',
+    'Pneumologista',
+    'Endocrinologista',
+    'Neurologista',
+    'Psiquiatra',
+    'Reumatologista',
+    'Nefrologista',
+    'Hematologista',
+    'Oncologista',
+    'Dermatologista',
+    'Oftalmologista',
+    'Otorrinolaringologista',
+    'Ortopedista',
+    'Infectologista',
+    'Geneticista',
+    'Médico do Trabalho',
+    'Médico Esportivo',
+    'Médico Intensivista',
+    'Médico Legista',
+    'Médico Nuclear',
+    'Radiologista',
+    'Patologista',
+    'Cirurgião Geral',
+    'Cirurgião Plástico',
+    'Cirurgião Vascular',
+    'Cirurgião Cardiotorácico',
+    'Cirurgião Neurológico',
+    'Cirurgião Pediátrico',
+    'Cirurgião Bucomaxilofacial',
+    'Cirurgião Oncológico',
+    
+    // Área Odontológica
+    'Cirurgião-Dentista (Odontólogo)',
     'Ortodontista',
     'Endodontista',
     'Periodontista',
-    'Implantodontista',
     'Odontopediatra',
-    'Cirurgião Bucomaxilofacial',
+    'Odontogeriatra',
     'Protesista',
-    'Dentística',
-    'Radiologista',
+    'Radiologista Odontológico',
     'Estomatologista',
-    'Odontogeriatria',
-    'Harmonização Facial',
+    'Odontolegista',
+    
+    // Enfermagem
+    'Enfermeiro',
+    'Técnico de Enfermagem',
+    'Auxiliar de Enfermagem',
+    'Obstetriz/Enfermeiro Obstetra',
+    'Enfermeiro Intensivista',
+    'Enfermeiro do Trabalho',
+    
+    // Terapias e Reabilitação
+    'Fisioterapeuta',
+    'Terapeuta Ocupacional',
+    'Fonoaudiólogo',
+    'Quiropraxista',
+    'Osteopata',
+    'Musicoterapeuta',
+    'Arteterapeuta',
+    
+    // Saúde Mental e Psicologia
+    'Psicólogo Clínico',
+    'Psicólogo Hospitalar',
+    'Neuropsicólogo',
+    'Psicanalista',
+    'Terapeuta Familiar',
+    'Terapeuta Cognitivo-Comportamental',
+    
+    // Nutrição e Alimentação
+    'Nutricionista Clínico',
+    'Nutricionista Esportivo',
+    'Nutricionista Infantil',
+    'Nutricionista Funcional',
+    
+    // Farmácia e Análises
+    'Farmacêutico Clínico',
+    'Farmacêutico Hospitalar',
+    'Farmacêutico Bioquímico',
+    'Farmacêutico Homeopata',
+    'Farmacêutico Industrial',
+    'Biomédico',
+    
+    // Saúde Complementar
+    'Educador Físico',
+    'Acupunturista',
+    'Fitoterapeuta',
+    'Homeopata',
+    'Naturopata',
+    'Doula',
+    'Podólogo',
+    
+    // Saúde Visual e Auditiva
+    'Optometrista',
+    'Técnico em Óptica',
+    'Audiologista',
+    'Protético Auditivo',
+    
+    // Outros
     'Outros',
   ];
 
@@ -180,13 +273,28 @@ export default function EditProfessional() {
     setLocations(newLocations);
   };
 
+  // Função para gerar opções de horário de 15 em 15 minutos (06:00 às 21:45)
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 6; hour < 22; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        options.push(timeString);
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = generateTimeOptions();
+
   const getDayLabel = (day) => {
     const labels = {
       monday: 'Segunda-feira',
       tuesday: 'Terça-feira',
       wednesday: 'Quarta-feira',
       thursday: 'Quinta-feira',
-      friday: 'Sexta-feira'
+      friday: 'Sexta-feira',
+      saturday: 'Sábado'
     };
     return labels[day];
   };
@@ -485,7 +593,7 @@ export default function EditProfessional() {
                               Horários de Atendimento
                             </label>
                             <div className="space-y-3">
-                              {Object.keys(location.schedule || {}).map((day) => (
+                              {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].map((day) => (
                                 <div key={day} className="flex items-center space-x-4">
                                   <div className="flex items-center">
                                     <input
@@ -504,23 +612,33 @@ export default function EditProfessional() {
                                     <div className="flex items-center space-x-2">
                                       <div>
                                         <label className="block text-xs text-gray-500">Início</label>
-                                        <input
-                                          type="time"
+                                        <select
                                           value={location.schedule[day]?.start || ''}
                                           onChange={(e) => handleScheduleChange(index, day, 'start', e.target.value)}
                                           className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-sm border-gray-300 rounded-md h-8"
-                                          step="60"
-                                        />
+                                        >
+                                          <option value="">--:--</option>
+                                          {timeOptions.map((time) => (
+                                            <option key={time} value={time}>
+                                              {time}
+                                            </option>
+                                          ))}
+                                        </select>
                                       </div>
                                       <div>
                                         <label className="block text-xs text-gray-500">Fim</label>
-                                        <input
-                                          type="time"
+                                        <select
                                           value={location.schedule[day]?.end || ''}
                                           onChange={(e) => handleScheduleChange(index, day, 'end', e.target.value)}
                                           className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-sm border-gray-300 rounded-md h-8"
-                                          step="60"
-                                        />
+                                        >
+                                          <option value="">--:--</option>
+                                          {timeOptions.map((time) => (
+                                            <option key={time} value={time}>
+                                              {time}
+                                            </option>
+                                          ))}
+                                        </select>
                                       </div>
                                     </div>
                                   )}

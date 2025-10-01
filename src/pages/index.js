@@ -140,9 +140,9 @@ export default function Home() {
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-20 flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 mb-10 md:mb-0">
-            <h1 className="text-5xl font-bold mb-6 text-blue-800">Automatize o agendamento da sua clínica</h1>
+            <h1 className="text-5xl font-bold mb-6 text-blue-800">Automatize o agendamento da suas consultas. </h1>
             <p className="text-xl text-blue-700 mb-8">
-              CinthIA é uma atendente virtual que gerencia o agendamento de consultas via WhatsApp para sua clínica odontológica.
+              CinthIA é uma atendente virtual que gerencia o agendamento de consultas via WhatsApp para você ou clínica.
             </p>
             <div className="flex space-x-4">
               <Link href="/register" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md hover:shadow-lg transition-all duration-300">
@@ -395,7 +395,7 @@ export default function Home() {
         {/* CTA */}
         <section className="bg-gradient-to-r from-blue-600 to-blue-800 py-16 text-white">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-4xl font-bold mb-6">Pronto para automatizar o agendamento da sua clínica?</h2>
+            <h2 className="text-4xl font-bold mb-6">Pronto para automatizar o agendamento da sua consultas?</h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto">Experimente a CinthIA gratuitamente por 7 dias e veja como ela pode transformar o atendimento da sua clínica.</p>
             <Link href="/register" className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white font-bold py-4 px-10 rounded-lg text-lg inline-block shadow-lg hover:shadow-xl transition-all duration-300">
               Começar teste grátis
@@ -411,7 +411,7 @@ export default function Home() {
               <div className="flex items-center mb-4">
                 <img src="/logo.png" alt="CinthIA" className="h-12 w-auto max-w-none" style={{display: 'block'}} />
               </div>
-              <p className="text-blue-100">Atendente virtual para clínicas odontológicas.</p>
+              <p className="text-blue-100">Atendente virtual para profissionais de saúde.</p>
             </div>
             <div>
               <h4 className="text-lg font-semibold mb-4 text-amber-400">Links Rápidos</h4>
