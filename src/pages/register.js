@@ -66,7 +66,8 @@ export default function Register() {
           data: {
             name,
             phone,
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/login`
         }
       });
 
@@ -93,8 +94,8 @@ export default function Register() {
 
       if (subscriptionError) throw subscriptionError;
 
-      // Redirecionar para o dashboard após registro bem-sucedido
-      router.push('/dashboard');
+      // Redirecionar para a tela de confirmação de email
+      router.push(`/email-confirmation?email=${encodeURIComponent(email)}`);
     } catch (error) {
       setError(error.message);
     } finally {
