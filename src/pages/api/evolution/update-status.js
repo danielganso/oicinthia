@@ -85,7 +85,7 @@ export default async function handler(req, res) {
       const { error: updErr } = await supabase
         .from('evolution_instances')
         .update(updateData)
-        .eq('professional_id', professionalId);
+        .eq('owner_user_id', user.id);
 
       if (updErr) {
         return res.status(500).json({ error: 'Falha ao atualizar instância', details: updErr.message });

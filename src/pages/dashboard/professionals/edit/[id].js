@@ -18,6 +18,9 @@ export default function EditProfessional() {
     clinic: '', 
     address: '', 
     price: '',
+    acceptsHealthInsurance: false,
+    healthInsurancePlans: [],
+    otherHealthInsurancePlans: '',
     schedule: {
       monday: { enabled: false, start: '', end: '' },
       tuesday: { enabled: false, start: '', end: '' },
@@ -38,113 +41,109 @@ export default function EditProfessional() {
   const [customSpecialty, setCustomSpecialty] = useState('');
 
   const specialties = [
-    // Área Médica (Médicos especialistas)
+    'Acupunturista',
+    'Arteterapeuta',
+    'Audiologista',
+    'Auxiliar de Enfermagem',
+    'Biomédico',
+    'Cardiologista',
+    'Cirurgião Bucomaxilofacial',
+    'Cirurgião Cardiotorácico',
+    'Cirurgião Geral',
+    'Cirurgião Neurológico',
+    'Cirurgião Oncológico',
+    'Cirurgião Pediátrico',
+    'Cirurgião Plástico',
+    'Cirurgião Vascular',
+    'Cirurgião-Dentista (Odontólogo)',
     'Clínico Geral',
-    'Pediatra',
+    'Dermatologista',
+    'Doula',
+    'Educador Físico',
+    'Endocrinologista',
+    'Endodontista',
+    'Enfermeiro',
+    'Enfermeiro do Trabalho',
+    'Enfermeiro Intensivista',
+    'Estomatologista',
+    'Farmacêutico Bioquímico',
+    'Farmacêutico Clínico',
+    'Farmacêutico Homeopata',
+    'Farmacêutico Hospitalar',
+    'Farmacêutico Industrial',
+    'Fisioterapeuta',
+    'Fitoterapeuta',
+    'Fonoaudiólogo',
+    'Geneticista',
     'Geriatra',
     'Ginecologista',
-    'Obstetra',
-    'Mastologista',
-    'Urologista',
-    'Cardiologista',
-    'Pneumologista',
-    'Endocrinologista',
-    'Neurologista',
-    'Psiquiatra',
-    'Reumatologista',
-    'Nefrologista',
     'Hematologista',
-    'Oncologista',
-    'Dermatologista',
-    'Oftalmologista',
-    'Otorrinolaringologista',
-    'Ortopedista',
+    'Homeopata',
     'Infectologista',
-    'Geneticista',
+    'Mastologista',
     'Médico do Trabalho',
     'Médico Esportivo',
     'Médico Intensivista',
     'Médico Legista',
     'Médico Nuclear',
-    'Radiologista',
-    'Patologista',
-    'Cirurgião Geral',
-    'Cirurgião Plástico',
-    'Cirurgião Vascular',
-    'Cirurgião Cardiotorácico',
-    'Cirurgião Neurológico',
-    'Cirurgião Pediátrico',
-    'Cirurgião Bucomaxilofacial',
-    'Cirurgião Oncológico',
-    
-    // Área Odontológica
-    'Cirurgião-Dentista (Odontólogo)',
-    'Ortodontista',
-    'Endodontista',
-    'Periodontista',
-    'Odontopediatra',
-    'Odontogeriatra',
-    'Protesista',
-    'Radiologista Odontológico',
-    'Estomatologista',
-    'Odontolegista',
-    
-    // Enfermagem
-    'Enfermeiro',
-    'Técnico de Enfermagem',
-    'Auxiliar de Enfermagem',
-    'Obstetriz/Enfermeiro Obstetra',
-    'Enfermeiro Intensivista',
-    'Enfermeiro do Trabalho',
-    
-    // Terapias e Reabilitação
-    'Fisioterapeuta',
-    'Terapeuta Ocupacional',
-    'Fonoaudiólogo',
-    'Quiropraxista',
-    'Osteopata',
     'Musicoterapeuta',
-    'Arteterapeuta',
-    
-    // Saúde Mental e Psicologia
-    'Psicólogo Clínico',
-    'Psicólogo Hospitalar',
+    'Naturopata',
+    'Nefrologista',
+    'Neurologista',
     'Neuropsicólogo',
-    'Psicanalista',
-    'Terapeuta Familiar',
-    'Terapeuta Cognitivo-Comportamental',
-    
-    // Nutrição e Alimentação
     'Nutricionista Clínico',
     'Nutricionista Esportivo',
-    'Nutricionista Infantil',
     'Nutricionista Funcional',
-    
-    // Farmácia e Análises
-    'Farmacêutico Clínico',
-    'Farmacêutico Hospitalar',
-    'Farmacêutico Bioquímico',
-    'Farmacêutico Homeopata',
-    'Farmacêutico Industrial',
-    'Biomédico',
-    
-    // Saúde Complementar
-    'Educador Físico',
-    'Acupunturista',
-    'Fitoterapeuta',
-    'Homeopata',
-    'Naturopata',
-    'Doula',
-    'Podólogo',
-    
-    // Saúde Visual e Auditiva
+    'Nutricionista Infantil',
+    'Obstetra',
+    'Obstetriz/Enfermeiro Obstetra',
+    'Odontolegista',
+    'Odontogeriatra',
+    'Odontopediatra',
+    'Oftalmologista',
+    'Oncologista',
     'Optometrista',
-    'Técnico em Óptica',
-    'Audiologista',
+    'Ortopedista',
+    'Osteopata',
+    'Otorrinolaringologista',
+    'Patologista',
+    'Pediatra',
+    'Periodontista',
+    'Pneumologista',
+    'Podólogo',
+    'Protesista',
     'Protético Auditivo',
-    
-    // Outros
+    'Psicanalista',
+    'Psicólogo Clínico',
+    'Psicólogo Hospitalar',
+    'Psiquiatra',
+    'Quiropraxista',
+    'Radiologista',
+    'Radiologista Odontológico',
+    'Reumatologista',
+    'Técnico de Enfermagem',
+    'Técnico em Óptica',
+    'Terapeuta Cognitivo-Comportamental',
+    'Terapeuta Familiar',
+    'Terapeuta Ocupacional',
+    'Urologista',
     'Outros',
+  ];
+
+  // Lista de planos de saúde predefinidos
+  const healthInsurancePlans = [
+    'Unimed',
+    'Bradesco Saúde',
+    'Amil',
+    'SulAmérica Saúde',
+    'Hapvida',
+    'NotreDame Intermédica (GNDI)',
+    'Porto Seguro Saúde',
+    'Allianz Saúde',
+    'São Francisco Saúde',
+    'Prevent Senior',
+    'Care Plus',
+    'Promed'
   ];
 
   // Carregar dados do profissional quando o ID estiver disponível
@@ -176,18 +175,37 @@ export default function EditProfessional() {
         
         // Preencher as localizações
         if (professional.locations_json && professional.locations_json.length > 0) {
-          // Garantir que cada localização tenha a estrutura de horários
-          const locationsWithSchedule = professional.locations_json.map(location => ({
-            ...location,
-            schedule: location.schedule || {
-              monday: { enabled: false, start: '', end: '' },
-              tuesday: { enabled: false, start: '', end: '' },
-              wednesday: { enabled: false, start: '', end: '' },
-              thursday: { enabled: false, start: '', end: '' },
-              friday: { enabled: false, start: '', end: '' },
-              saturday: { enabled: false, start: '', end: '' }
+          // Garantir que cada localização tenha a estrutura de horários e planos de saúde
+          const locationsWithSchedule = professional.locations_json.map(location => {
+            // Formatar o preço se existir
+            let formattedPrice = 'R$ 0,00';
+            if (location.price) {
+              const digits = location.price.toString().replace(/\D/g, '');
+              if (digits !== '') {
+                const cents = parseInt(digits);
+                const reais = Math.floor(cents / 100);
+                const centavos = cents % 100;
+                const formattedReais = reais.toLocaleString('pt-BR');
+                formattedPrice = `R$ ${formattedReais},${centavos.toString().padStart(2, '0')}`;
+              }
             }
-          }));
+            
+            return {
+              ...location,
+              price: formattedPrice,
+              schedule: location.schedule || {
+                monday: { enabled: false, start: '', end: '' },
+                tuesday: { enabled: false, start: '', end: '' },
+                wednesday: { enabled: false, start: '', end: '' },
+                thursday: { enabled: false, start: '', end: '' },
+                friday: { enabled: false, start: '', end: '' },
+                saturday: { enabled: false, start: '', end: '' }
+              },
+              acceptsHealthInsurance: location.acceptsHealthInsurance || false,
+              healthInsurancePlans: location.healthInsurancePlans || [],
+              otherHealthInsurancePlans: location.otherHealthInsurancePlans || ''
+            };
+          });
           setLocations(locationsWithSchedule);
         }
       }
@@ -235,6 +253,25 @@ export default function EditProfessional() {
         // Limita a 8 dígitos
         const formatted = `${cepDigits.slice(0, 5)}-${cepDigits.slice(5, 8)}`;
         value = formatted;
+      }
+    }
+    
+    // Formatar preço automaticamente (R$ 0,00)
+    if (field === 'price') {
+      // Remove tudo que não é dígito
+      const digits = value.replace(/\D/g, '');
+      
+      if (digits === '') {
+        value = 'R$ 0,00';
+      } else {
+        // Converte para centavos e formata
+        const cents = parseInt(digits);
+        const reais = Math.floor(cents / 100);
+        const centavos = cents % 100;
+        
+        // Formata com separadores de milhares
+        const formattedReais = reais.toLocaleString('pt-BR');
+        value = `R$ ${formattedReais},${centavos.toString().padStart(2, '0')}`;
       }
     }
     
@@ -306,6 +343,9 @@ export default function EditProfessional() {
       clinic: '', 
       address: '', 
       price: '',
+      acceptsHealthInsurance: false,
+      healthInsurancePlans: [],
+      otherHealthInsurancePlans: '',
       schedule: {
         monday: { enabled: false, start: '', end: '' },
         tuesday: { enabled: false, start: '', end: '' },
@@ -320,6 +360,24 @@ export default function EditProfessional() {
   const removeLocation = (index) => {
     const newLocations = [...locations];
     newLocations.splice(index, 1);
+    setLocations(newLocations);
+  };
+
+  // Função para manipular mudanças nos planos de saúde
+  const handleHealthInsuranceChange = (locationIndex, planName, isChecked) => {
+    const newLocations = [...locations];
+    const currentPlans = newLocations[locationIndex].healthInsurancePlans || [];
+    
+    if (isChecked) {
+      // Adicionar plano se não estiver na lista
+      if (!currentPlans.includes(planName)) {
+        newLocations[locationIndex].healthInsurancePlans = [...currentPlans, planName];
+      }
+    } else {
+      // Remover plano da lista
+      newLocations[locationIndex].healthInsurancePlans = currentPlans.filter(plan => plan !== planName);
+    }
+    
     setLocations(newLocations);
   };
 
@@ -582,7 +640,7 @@ export default function EditProfessional() {
                                 value={location.price || ''}
                                 onChange={(e) => handleLocationChange(index, 'price', e.target.value)}
                                 className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-base text-base border-gray-300 rounded-md h-12"
-                                placeholder="0,00"
+                                placeholder="R$ 0,00"
                               />
                             </div>
                           </div>
@@ -645,6 +703,65 @@ export default function EditProfessional() {
                                 </div>
                               ))}
                             </div>
+                          </div>
+
+                          {/* Planos de Saúde */}
+                          <div className="md:col-span-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                              Planos de Saúde
+                            </label>
+                            
+                            {/* Checkbox para aceitar planos de saúde */}
+                            <div className="mb-4">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  id={`acceptsHealthInsurance-${index}`}
+                                  checked={location.acceptsHealthInsurance || false}
+                                  onChange={(e) => handleLocationChange(index, 'acceptsHealthInsurance', e.target.checked)}
+                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <label htmlFor={`acceptsHealthInsurance-${index}`} className="ml-2 text-sm text-gray-700">
+                                  Aceita planos de saúde
+                                </label>
+                              </div>
+                            </div>
+
+                            {/* Lista de planos de saúde (aparece apenas se aceitar planos) */}
+                            {location.acceptsHealthInsurance && (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                  {healthInsurancePlans.map((plan) => (
+                                    <div key={plan} className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        id={`plan-${plan}-${index}`}
+                                        checked={(location.healthInsurancePlans || []).includes(plan)}
+                                        onChange={(e) => handleHealthInsuranceChange(index, plan, e.target.checked)}
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                      />
+                                      <label htmlFor={`plan-${plan}-${index}`} className="ml-2 text-sm text-gray-700">
+                                        {plan}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                                
+                                {/* Campo para outros planos */}
+                                <div className="mt-4">
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Outros planos (separados por vírgula)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={location.otherHealthInsurancePlans || ''}
+                                    onChange={(e) => handleLocationChange(index, 'otherHealthInsurancePlans', e.target.value)}
+                                    placeholder="Ex: Plano A, Plano B, Plano C"
+                                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

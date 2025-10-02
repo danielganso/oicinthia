@@ -11,26 +11,75 @@ export default function ProfessionalDetail() {
   const { id } = router.query;
   const [professional, setProfessional] = useState(null);
   const [whatsappInstance, setWhatsappInstance] = useState(null);
+  const [subscriptionData, setSubscriptionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const updateWhatsAppStatus = async () => {
-    if (!professional) return;
+    if (!professional?.id) return;
     
     try {
-      // Buscar dados atualizados da instância do WhatsApp
       const { data: instanceData, error: instanceError } = await supabase
         .from('evolution_instances')
         .select('*')
-        .eq('professional_id', id)
+        .eq('professional_id', professional.id)
         .single();
         
       if (!instanceError && instanceData) {
-        console.log('Status atualizado:', instanceData.state);
         setWhatsappInstance(instanceData);
       }
     } catch (error) {
-      console.error('Erro ao atualizar status do WhatsApp:', error);
+      console.error('Error updating WhatsApp status:', error);
+    }
+  };
+
+  const handleDisconnectWhatsApp = async () => {
+    if (!professional?.id) return;
+    
+    const confirmDisconnect = window.confirm('Tem certeza que deseja desconectar o WhatsApp? Esta ação irá interromper todas as funcionalidades do WhatsApp para este profissional.');
+    
+    if (!confirmDisconnect) return;
+    
+    try {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sessão não encontrada');
+
+      const response = await fetch('/api/evolution/disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          professionalId: professional.id
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao desconectar WhatsApp');
+      }
+
+      toast.success('WhatsApp desconectado com sucesso!');
+      
+      // Atualizar dados locais
+      setWhatsappInstance(null);
+      setProfessional(prev => ({
+        ...prev,
+        whatsapp_device_id: null
+      }));
+      
+      // Recarregar dados
+      await fetchProfessional();
+      
+    } catch (error) {
+      console.error('Error disconnecting WhatsApp:', error);
+      toast.error(error.message || 'Erro ao desconectar WhatsApp');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,6 +99,22 @@ export default function ProfessionalDetail() {
   const fetchProfessional = async () => {
     try {
       setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Sessão não encontrada');
+      }
+
+      // Buscar dados da subscription do usuário
+      const { data: subscriptionInfo, error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('owner_user_id', session.user.id)
+        .single();
+
+      if (!subscriptionError && subscriptionInfo) {
+        setSubscriptionData(subscriptionInfo);
+      }
       
       // Buscar dados do profissional
       const { data: profData, error: profError } = await supabase
@@ -193,41 +258,90 @@ export default function ProfessionalDetail() {
                 <div className="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                   <dt className="text-sm font-medium text-gray-500">WhatsApp</dt>
                   <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    <div>
-                      <WhatsAppLinkButton professionalId={professional.id} deviceId={professional.whatsapp_device_id} />
-                      
-                      {whatsappInstance && (
-                        <div className="mt-3 bg-gray-50 p-3 rounded-md">
-                          <h4 className="font-medium text-gray-700 mb-2">Informações da Instância</h4>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                              <span className="font-medium">Nome:</span> {whatsappInstance.instance_name}
+                    {subscriptionData && (subscriptionData.plan === 'ate_3' || subscriptionData.plan === 'ate_5') ? (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-blue-800">
+                              WhatsApp da Clínica
+                            </h3>
+                            <div className="mt-2 text-sm text-blue-700">
+                              <p>Para planos de clínica, o WhatsApp é compartilhado entre todos os profissionais.</p>
+                              <p className="mt-1">Configure o WhatsApp da clínica em <strong>Meus Dados</strong>.</p>
                             </div>
-                            <div>
-                              <span className="font-medium">Estado:</span> 
-                              <span className={`ml-1 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${whatsappInstance.state === 'connected' || whatsappInstance.state === 'open' || whatsappInstance.state === 'Open' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                                {whatsappInstance.state === 'connected' || whatsappInstance.state === 'open' || whatsappInstance.state === 'Open' ? 'Conectado' : 'Desconectado'}
-                              </span>
-                            </div>
-                            {whatsappInstance.number_e164 && (
-                              <div>
-                                <span className="font-medium">Número:</span> {whatsappInstance.number_e164}
-                              </div>
-                            )}
-                            {whatsappInstance.connected_at && (
-                              <div>
-                                <span className="font-medium">Conectado em:</span> {new Date(whatsappInstance.connected_at).toLocaleString()}
-                              </div>
-                            )}
-                            {whatsappInstance.last_qr_at && (
-                              <div>
-                                <span className="font-medium">Último QR em:</span> {new Date(whatsappInstance.last_qr_at).toLocaleString()}
-                              </div>
-                            )}
                           </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex gap-2 mb-3">
+                          <WhatsAppLinkButton 
+                            professionalId={professional.id} 
+                            deviceId={professional.whatsapp_device_id}
+                            onSuccess={() => {
+                              // Recarregar dados após sucesso na conexão
+                              fetchProfessional();
+                            }}
+                          />
+                          
+                          {whatsappInstance && whatsappInstance.state !== 'disconnected' && whatsappInstance.state !== 'close' && (
+                            <button
+                              onClick={handleDisconnectWhatsApp}
+                              disabled={loading}
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                            >
+                              {loading ? (
+                                <>
+                                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Desconectando...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  Desconectar WhatsApp
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Status do WhatsApp - sempre mostrar */}
+                    {whatsappInstance && (
+                      <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Status da Conexão</p>
+                            <p className="text-xs text-gray-500">Última atualização: {new Date(whatsappInstance.updated_at).toLocaleString('pt-BR')}</p>
+                          </div>
+                          <div className="flex items-center">
+                            <div className={`w-3 h-3 rounded-full mr-2 ${
+                              whatsappInstance.state === 'open' ? 'bg-green-400' : 
+                              whatsappInstance.state === 'qr' ? 'bg-yellow-400' : 'bg-red-400'
+                            }`}></div>
+                            <span className={`text-xs font-medium ${
+                              whatsappInstance.state === 'open' ? 'text-green-600' : 
+                              whatsappInstance.state === 'qr' ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {whatsappInstance.state === 'open' ? 'Conectado' : 
+                               whatsappInstance.state === 'qr' ? 'Aguardando QR' : 
+                               whatsappInstance.state || 'Desconectado'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </dd>
                 </div>
               </dl>

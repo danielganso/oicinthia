@@ -19,7 +19,10 @@ export default function NewProfessional() {
     city: '', 
     clinic: '', 
     address: '', 
-    price: '',
+    price: 'R$ 0,00',
+    acceptsHealthInsurance: false,
+    healthInsurancePlans: [],
+    otherHealthInsurancePlans: '',
     schedule: {
       monday: { enabled: false, start: '', end: '' },
       tuesday: { enabled: false, start: '', end: '' },
@@ -40,112 +43,92 @@ export default function NewProfessional() {
   const [customSpecialty, setCustomSpecialty] = useState('');
 
   const specialties = [
-    // Área Médica (Médicos especialistas)
+    'Acupunturista',
+    'Arteterapeuta',
+    'Audiologista',
+    'Auxiliar de Enfermagem',
+    'Biomédico',
+    'Cardiologista',
+    'Cirurgião Bucomaxilofacial',
+    'Cirurgião Cardiotorácico',
+    'Cirurgião Geral',
+    'Cirurgião Neurológico',
+    'Cirurgião Oncológico',
+    'Cirurgião Pediátrico',
+    'Cirurgião Plástico',
+    'Cirurgião Vascular',
+    'Cirurgião-Dentista (Odontólogo)',
     'Clínico Geral',
-    'Pediatra',
+    'Dermatologista',
+    'Doula',
+    'Educador Físico',
+    'Endocrinologista',
+    'Endodontista',
+    'Enfermeiro',
+    'Enfermeiro do Trabalho',
+    'Enfermeiro Intensivista',
+    'Estomatologista',
+    'Farmacêutico Bioquímico',
+    'Farmacêutico Clínico',
+    'Farmacêutico Homeopata',
+    'Farmacêutico Hospitalar',
+    'Farmacêutico Industrial',
+    'Fisioterapeuta',
+    'Fitoterapeuta',
+    'Fonoaudiólogo',
+    'Geneticista',
     'Geriatra',
     'Ginecologista',
-    'Obstetra',
-    'Mastologista',
-    'Urologista',
-    'Cardiologista',
-    'Pneumologista',
-    'Endocrinologista',
-    'Neurologista',
-    'Psiquiatra',
-    'Reumatologista',
-    'Nefrologista',
     'Hematologista',
-    'Oncologista',
-    'Dermatologista',
-    'Oftalmologista',
-    'Otorrinolaringologista',
-    'Ortopedista',
+    'Homeopata',
     'Infectologista',
-    'Geneticista',
+    'Mastologista',
     'Médico do Trabalho',
     'Médico Esportivo',
     'Médico Intensivista',
     'Médico Legista',
     'Médico Nuclear',
-    'Radiologista',
-    'Patologista',
-    'Cirurgião Geral',
-    'Cirurgião Plástico',
-    'Cirurgião Vascular',
-    'Cirurgião Cardiotorácico',
-    'Cirurgião Neurológico',
-    'Cirurgião Pediátrico',
-    'Cirurgião Bucomaxilofacial',
-    'Cirurgião Oncológico',
-    
-    // Área Odontológica
-    'Cirurgião-Dentista (Odontólogo)',
-    'Ortodontista',
-    'Endodontista',
-    'Periodontista',
-    'Odontopediatra',
-    'Odontogeriatra',
-    'Protesista',
-    'Radiologista Odontológico',
-    'Estomatologista',
-    'Odontolegista',
-    
-    // Enfermagem
-    'Enfermeiro',
-    'Técnico de Enfermagem',
-    'Auxiliar de Enfermagem',
-    'Obstetriz/Enfermeiro Obstetra',
-    'Enfermeiro Intensivista',
-    'Enfermeiro do Trabalho',
-    
-    // Terapias e Reabilitação
-    'Fisioterapeuta',
-    'Terapeuta Ocupacional',
-    'Fonoaudiólogo',
-    'Quiropraxista',
-    'Osteopata',
     'Musicoterapeuta',
-    'Arteterapeuta',
-    
-    // Saúde Mental e Psicologia
-    'Psicólogo Clínico',
-    'Psicólogo Hospitalar',
+    'Naturopata',
+    'Nefrologista',
+    'Neurologista',
     'Neuropsicólogo',
-    'Psicanalista',
-    'Terapeuta Familiar',
-    'Terapeuta Cognitivo-Comportamental',
-    
-    // Nutrição e Alimentação
     'Nutricionista Clínico',
     'Nutricionista Esportivo',
-    'Nutricionista Infantil',
     'Nutricionista Funcional',
-    
-    // Farmácia e Análises
-    'Farmacêutico Clínico',
-    'Farmacêutico Hospitalar',
-    'Farmacêutico Bioquímico',
-    'Farmacêutico Homeopata',
-    'Farmacêutico Industrial',
-    'Biomédico',
-    
-    // Saúde Complementar
-    'Educador Físico',
-    'Acupunturista',
-    'Fitoterapeuta',
-    'Homeopata',
-    'Naturopata',
-    'Doula',
-    'Podólogo',
-    
-    // Saúde Visual e Auditiva
+    'Nutricionista Infantil',
+    'Obstetra',
+    'Obstetriz/Enfermeiro Obstetra',
+    'Odontolegista',
+    'Odontogeriatra',
+    'Odontopediatra',
+    'Oftalmologista',
+    'Oncologista',
     'Optometrista',
-    'Técnico em Óptica',
-    'Audiologista',
+    'Ortopedista',
+    'Osteopata',
+    'Otorrinolaringologista',
+    'Patologista',
+    'Pediatra',
+    'Periodontista',
+    'Pneumologista',
+    'Podólogo',
+    'Protesista',
     'Protético Auditivo',
-    
-    // Outros
+    'Psicanalista',
+    'Psicólogo Clínico',
+    'Psicólogo Hospitalar',
+    'Psiquiatra',
+    'Quiropraxista',
+    'Radiologista',
+    'Radiologista Odontológico',
+    'Reumatologista',
+    'Técnico de Enfermagem',
+    'Técnico em Óptica',
+    'Terapeuta Cognitivo-Comportamental',
+    'Terapeuta Familiar',
+    'Terapeuta Ocupacional',
+    'Urologista',
     'Outros',
   ];
 
@@ -202,6 +185,22 @@ export default function NewProfessional() {
     }
   };
 
+  // Lista de planos de saúde predefinidos
+  const healthInsurancePlans = [
+    'Unimed',
+    'Bradesco Saúde',
+    'Amil',
+    'SulAmérica Saúde',
+    'Hapvida',
+    'NotreDame Intermédica (GNDI)',
+    'Porto Seguro Saúde',
+    'Allianz Saúde',
+    'São Francisco Saúde',
+    'Prevent Senior',
+    'Care Plus',
+    'Promed'
+  ];
+
   const handleLocationChange = (index, field, value) => {
     const newLocations = [...locations];
     
@@ -227,7 +226,40 @@ export default function NewProfessional() {
       }
     }
     
+    // Formatar preço automaticamente (R$ 0,00)
+    if (field === 'price') {
+      // Remove tudo que não é dígito
+      const digits = value.replace(/\D/g, '');
+      
+      if (digits === '') {
+        value = 'R$ 0,00';
+      } else {
+        // Converte para centavos e formata
+        const cents = parseInt(digits);
+        const reais = Math.floor(cents / 100);
+        const centavos = cents % 100;
+        
+        // Formata com separadores de milhares
+        const formattedReais = reais.toLocaleString('pt-BR');
+        value = `R$ ${formattedReais},${centavos.toString().padStart(2, '0')}`;
+      }
+    }
+    
     newLocations[index][field] = value;
+    setLocations(newLocations);
+  };
+
+  // Função para manipular planos de saúde
+  const handleHealthInsuranceChange = (index, planName, isChecked) => {
+    const newLocations = [...locations];
+    const currentPlans = newLocations[index].healthInsurancePlans || [];
+    
+    if (isChecked) {
+      newLocations[index].healthInsurancePlans = [...currentPlans, planName];
+    } else {
+      newLocations[index].healthInsurancePlans = currentPlans.filter(plan => plan !== planName);
+    }
+    
     setLocations(newLocations);
   };
   
@@ -295,6 +327,9 @@ export default function NewProfessional() {
       clinic: '', 
       address: '', 
       price: '',
+      acceptsHealthInsurance: false,
+      healthInsurancePlans: [],
+      otherHealthInsurancePlans: '',
       schedule: {
         monday: { enabled: false, start: '', end: '' },
         tuesday: { enabled: false, start: '', end: '' },
@@ -623,7 +658,7 @@ export default function NewProfessional() {
                                 value={location.price}
                                 onChange={(e) => handleLocationChange(index, 'price', e.target.value)}
                                 className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-base text-base border-gray-300 rounded-md h-12"
-                                placeholder="0,00"
+                                placeholder="R$ 0,00"
                               />
                             </div>
                           </div>
@@ -695,6 +730,70 @@ export default function NewProfessional() {
                             ))}
                           </div>
                         </div>
+
+                        {/* Seção de Planos de Saúde */}
+                        <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                          <h5 className="text-md font-medium text-purple-800 mb-4">Planos de Saúde</h5>
+                          <p className="text-sm text-purple-600 mb-4">Informe se este local aceita planos de saúde</p>
+                          
+                          <div className="mb-4">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                id={`acceptsHealthInsurance-${index}`}
+                                checked={location.acceptsHealthInsurance}
+                                onChange={(e) => handleLocationChange(index, 'acceptsHealthInsurance', e.target.checked)}
+                                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                              />
+                              <label htmlFor={`acceptsHealthInsurance-${index}`} className="ml-2 text-sm font-medium text-gray-700">
+                                 Aceita planos de saúde
+                               </label>
+                            </div>
+                          </div>
+
+                          {location.acceptsHealthInsurance && (
+                            <div className="space-y-4">
+                              <div>
+                                <h6 className="text-sm font-medium text-gray-700 mb-3">Selecione os planos aceitos:</h6>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                  {healthInsurancePlans.map((plan) => (
+                                    <div key={plan} className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        id={`plan-${index}-${plan}`}
+                                        checked={location.healthInsurancePlans?.includes(plan) || false}
+                                        onChange={(e) => handleHealthInsuranceChange(index, plan, e.target.checked)}
+                                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                      />
+                                      <label htmlFor={`plan-${index}-${plan}`} className="ml-2 text-sm text-gray-700">
+                                        {plan}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div>
+                                <label htmlFor={`otherHealthInsurancePlans-${index}`} className="block text-sm font-medium text-gray-700 mb-2">
+                                  Outros planos (separados por vírgula):
+                                </label>
+                                <input
+                                  type="text"
+                                  id={`otherHealthInsurancePlans-${index}`}
+                                  value={location.otherHealthInsurancePlans}
+                                  onChange={(e) => handleLocationChange(index, 'otherHealthInsurancePlans', e.target.value)}
+                                  className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                  placeholder="Ex: Plano A, Plano B, Plano C"
+                                />
+                                <p className="mt-1 text-xs text-gray-500">
+                                  Digite os nomes dos outros planos separados por vírgula
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Campo de ID do dispositivo WhatsApp removido conforme solicitado */}
                       </div>
                     ))}
 

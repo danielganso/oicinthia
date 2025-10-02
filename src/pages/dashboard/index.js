@@ -12,6 +12,8 @@ export default function Dashboard() {
   const [totalAppointments, setTotalAppointments] = useState(0);
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const [professionals, setProfessionals] = useState([]);
+  const [professionalsWhatsAppStatus, setProfessionalsWhatsAppStatus] = useState([]);
+  const [clinicWhatsAppStatus, setClinicWhatsAppStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showTrialExpiredModal, setShowTrialExpiredModal] = useState(false);
 
@@ -62,6 +64,15 @@ export default function Dashboard() {
           .eq('owner_user_id', session.user.id);
 
         setProfessionals(professionalsData || []);
+
+        // Buscar status do WhatsApp
+        if (subscriptionData && (subscriptionData.plan === 'ate_3' || subscriptionData.plan === 'ate_5')) {
+          // Para planos de clínica, buscar status do WhatsApp da clínica
+          await fetchClinicWhatsAppStatus();
+        } else if (professionalsData && professionalsData.length > 0) {
+          // Para outros planos, buscar status do WhatsApp dos profissionais
+          await fetchWhatsAppStatus(professionalsData);
+        }
 
         // Buscar próximas consultas
         const { data, error } = await supabase
@@ -116,6 +127,96 @@ export default function Dashboard() {
 
     fetchData();
   }, []);
+
+  // Função para buscar status do WhatsApp da clínica (para planos ate_3 e ate_5)
+  const fetchClinicWhatsAppStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/evolution/clinic-whatsapp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          action: 'status'
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClinicWhatsAppStatus({
+          connected: data.connected,
+          instanceKey: data.instanceKey,
+          hasInstance: !!data.instanceKey
+        });
+      } else {
+        setClinicWhatsAppStatus({
+          connected: false,
+          instanceKey: null,
+          hasInstance: false
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar status do WhatsApp da clínica:', error);
+      setClinicWhatsAppStatus({
+        connected: false,
+        instanceKey: null,
+        hasInstance: false
+      });
+    }
+  };
+
+  // Função para buscar status do WhatsApp dos profissionais
+  const fetchWhatsAppStatus = async (professionalsData) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const statusPromises = professionalsData.map(async (professional) => {
+        try {
+          // Buscar instância do WhatsApp
+          const { data: instanceData } = await supabase
+            .from('evolution_instances')
+            .select('*')
+            .eq('professional_id', professional.id)
+            .single();
+
+          let whatsappStatus = {
+            professionalId: professional.id,
+            professionalName: professional.name,
+            connected: false,
+            state: 'disconnected',
+            hasInstance: false
+          };
+
+          if (instanceData) {
+            whatsappStatus.hasInstance = true;
+            whatsappStatus.connected = instanceData.state === 'open';
+            whatsappStatus.state = instanceData.state || 'disconnected';
+          }
+
+          return whatsappStatus;
+        } catch (error) {
+          console.error(`Erro ao buscar status do WhatsApp para profissional ${professional.id}:`, error);
+          return {
+            professionalId: professional.id,
+            professionalName: professional.name,
+            connected: false,
+            state: 'error',
+            hasInstance: false
+          };
+        }
+      });
+
+      const statusResults = await Promise.all(statusPromises);
+      setProfessionalsWhatsAppStatus(statusResults);
+    } catch (error) {
+      console.error('Erro ao buscar status do WhatsApp dos profissionais:', error);
+    }
+  };
 
   // Formatar data e hora
   const formatDateTime = (isoString) => {
@@ -344,8 +445,11 @@ export default function Dashboard() {
                     Plano Atual
                   </dt>
                   <dd className="flex flex-col">
-                    <div className="text-lg font-semibold text-gray-900 capitalize">
-                      {subscriptionInfo.plan}
+                    <div className="text-lg font-semibold text-gray-900">
+                      {subscriptionInfo.plan === 'autonomo' ? 'Autônomo' :
+                       subscriptionInfo.plan === 'ate_3' ? 'Clínica Pequena' :
+                       subscriptionInfo.plan === 'ate_5' ? 'Clínica Média' :
+                       subscriptionInfo.plan}
                     </div>
                     <div className="text-sm text-gray-500">
                       Status: <span className={`font-medium ${
@@ -399,6 +503,128 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Seção de Status do WhatsApp da Clínica (para planos ate_3 e ate_5) */}
+      {subscriptionInfo && (subscriptionInfo.plan === 'ate_3' || subscriptionInfo.plan === 'ate_5') && (
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Status do WhatsApp da Clínica</h2>
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div className="px-4 py-5 sm:px-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Conexão WhatsApp</h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">Status da conexão do WhatsApp compartilhado da clínica</p>
+            </div>
+            <div className="border-t border-gray-200">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900">WhatsApp da Clínica</h4>
+                    <p className="text-xs text-gray-500">Código: {subscriptionInfo.public_code}</p>
+                  </div>
+                  <div className="flex items-center">
+                    {clinicWhatsAppStatus ? (
+                      <>
+                        <div className={`w-3 h-3 rounded-full mr-2 ${
+                          clinicWhatsAppStatus.connected ? 'bg-green-400' : 
+                          clinicWhatsAppStatus.hasInstance ? 'bg-yellow-400' : 'bg-red-400'
+                        }`}></div>
+                        <span className={`text-xs font-medium ${
+                          clinicWhatsAppStatus.connected ? 'text-green-600' : 
+                          clinicWhatsAppStatus.hasInstance ? 'text-yellow-600' : 'text-red-600'
+                        }`}>
+                          {clinicWhatsAppStatus.connected ? 'Conectado' : 
+                           clinicWhatsAppStatus.hasInstance ? 'Desconectado' : 'Não configurado'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-3 h-3 rounded-full mr-2 bg-gray-400"></div>
+                        <span className="text-xs font-medium text-gray-600">Carregando...</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {clinicWhatsAppStatus && !clinicWhatsAppStatus.hasInstance && (
+                  <div className="mt-4">
+                    <Link 
+                      href="/dashboard/meus-dados"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                    >
+                      Configurar WhatsApp
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seção de Profissionais e Status do WhatsApp (apenas para planos não-clínica) */}
+      {professionals.length > 0 && subscriptionInfo && subscriptionInfo.plan !== 'ate_3' && subscriptionInfo.plan !== 'ate_5' && (
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Profissionais e Status do WhatsApp</h2>
+          <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div className="px-4 py-5 sm:px-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Status das Conexões</h3>
+              <p className="mt-1 max-w-2xl text-sm text-gray-500">Acompanhe o status das conexões do WhatsApp dos seus profissionais</p>
+            </div>
+            <div className="border-t border-gray-200">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {professionals.map((professional) => {
+                    const whatsappStatus = professionalsWhatsAppStatus.find(
+                      status => status.professionalId === professional.id
+                    );
+                    
+                    return (
+                      <div key={professional.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">{professional.name}</h4>
+                            <p className="text-xs text-gray-500">{professional.specialty}</p>
+                          </div>
+                          <div className="flex items-center">
+                            {whatsappStatus ? (
+                              <>
+                                <div className={`w-3 h-3 rounded-full mr-2 ${
+                                  whatsappStatus.connected ? 'bg-green-400' : 
+                                  whatsappStatus.hasInstance ? 'bg-yellow-400' : 'bg-red-400'
+                                }`}></div>
+                                <span className={`text-xs font-medium ${
+                                  whatsappStatus.connected ? 'text-green-600' : 
+                                  whatsappStatus.hasInstance ? 'text-yellow-600' : 'text-red-600'
+                                }`}>
+                                  {whatsappStatus.connected ? 'Conectado' : 
+                                   whatsappStatus.hasInstance ? 'Desconectado' : 'Não configurado'}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-3 h-3 rounded-full mr-2 bg-gray-400"></div>
+                                <span className="text-xs font-medium text-gray-600">Carregando...</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        {whatsappStatus && !whatsappStatus.hasInstance && (
+                          <div className="mt-2">
+                            <Link 
+                              href={`/dashboard/professionals/${professional.id}/whatsapp`}
+                              className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            >
+                              Configurar WhatsApp
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Seção de links rápidos */}
       <div className="mt-6">

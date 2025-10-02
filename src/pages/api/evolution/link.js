@@ -191,29 +191,50 @@ export default async function handler(req, res) {
       .single();
     if (profErr || !professional) return fail('db.professional', profErr?.message || 'Profissional não encontrado', 404);
 
+    // Buscar subscription para verificar o plano
+    const { data: subscription, error: subErr } = await supabase
+      .from('subscriptions')
+      .select('plan, public_code')
+      .eq('owner_user_id', userId)
+      .single();
+    if (subErr || !subscription) return fail('db.subscription', subErr?.message || 'Subscription não encontrada', 404);
+
+    // Verificar se é plano ate_3 ou ate_5 (usa public_code da clínica)
+    const isClinicPlan = subscription.plan === 'ate_3' || subscription.plan === 'ate_5';
+    const useClinicCode = isClinicPlan && subscription.public_code;
+
     // ENV Evolution
     const EV_BASE = trimBase(process.env.EVOLUTION_API_BASE || 'https://evolutionapi.tripos.com.br');
     const EV_KEY  = process.env.EVOLUTION_API_KEY || '';
     if (!EV_KEY) return fail('env.key', 'EVOLUTION_API_KEY não configurada', 500);
 
     // Webhook n8n
+    const isProd = process.env.NODE_ENV === 'production';
     const baseUrl = isProd
-  ? process.env.N8N_WEBHOOK_URL_PROD
-  : process.env.N8N_WEBHOOK_URL_TEST;
+      ? process.env.N8N_WEBHOOK_URL_PROD
+      : process.env.N8N_WEBHOOK_URL_TEST;
 
-// adiciona o nome da instância no final
-const webhookUrl = `${baseUrl}/${encodeURIComponent(instanceKey)}`;
+    // Instance desejada (usa public_code da clínica para planos ate_3/ate_5)
+    const desiredKey = useClinicCode 
+      ? subscription.public_code 
+      : (professional.public_code || `prof_${String(professionalId).substring(0,8)}`);
+    
+    // adiciona o nome da instância no final
+    const webhookUrl = `${baseUrl}/${encodeURIComponent(desiredKey)}`;
 
+    // Para planos de clínica, buscar instância existente por public_code da subscription
+    // Para outros planos, buscar por professional_id como antes
+    let existingQuery = supabase.from('evolution_instances').select('*');
+    
+    if (isClinicPlan) {
+      // Para planos de clínica, buscar por owner_user_id (uma instância por clínica)
+      existingQuery = existingQuery.eq('owner_user_id', userId).eq('instance_key', desiredKey);
+    } else {
+      // Para outros planos, buscar por professional_id (uma instância por profissional)
+      existingQuery = existingQuery.eq('professional_id', professionalId);
+    }
 
-    // Instance desejada
-    const desiredKey = professional.public_code || `prof_${String(professionalId).substring(0,8)}`;
-
-    // Já existe?
-    const { data: existing } = await supabase
-      .from('evolution_instances')
-      .select('*')
-      .eq('professional_id', professionalId)
-      .maybeSingle();
+    const { data: existing } = await existingQuery.maybeSingle();
 
     // Helper: QR + status + número (usa snapshot fortalecido)
     const getQrAndState = async (key) => {
@@ -259,7 +280,8 @@ const webhookUrl = `${baseUrl}/${encodeURIComponent(instanceKey)}`;
       instanceName: desiredKey,
       qrcode: true,
       groupsIgnore: true,
-      integration: 'WHATSAPP-BAILEYS'
+      integration: 'WHATSAPP-BAILEYS',
+      browser: ['OiCinthia Ass Virtual', 'Chrome', '10.0']
     };
 
     const createRes = await withTimeout(fetch(`${EV_BASE}/instance/create`, {
@@ -313,7 +335,6 @@ const webhookUrl = `${baseUrl}/${encodeURIComponent(instanceKey)}`;
 
     // Persistir
     const row = {
-      professional_id: professionalId,
       owner_user_id: userId,
       instance_name: instanceKey,
       instance_key: instanceKey,
@@ -323,6 +344,12 @@ const webhookUrl = `${baseUrl}/${encodeURIComponent(instanceKey)}`;
       last_qr_at: new Date().toISOString(),
       state: state || 'qr'
     };
+
+    // Para planos de clínica, não associar a um profissional específico
+    // Para outros planos, associar ao profissional
+    if (!isClinicPlan) {
+      row.professional_id = professionalId;
+    }
 
     if (isConnectedState(row.state)) {
       row.connected_at = new Date().toISOString();
@@ -340,10 +367,13 @@ const webhookUrl = `${baseUrl}/${encodeURIComponent(instanceKey)}`;
       return fail('db.insert_instance', upsert.error.message);
     }
 
-    await supabase
-      .from('professionals')
-      .update({ whatsapp_device_id: instanceKey })
-      .eq('id', professionalId);
+    // Atualizar whatsapp_device_id apenas para planos não-clínica
+    if (!isClinicPlan) {
+      await supabase
+        .from('professionals')
+        .update({ whatsapp_device_id: instanceKey })
+        .eq('id', professionalId);
+    }
 
     return res.status(200).json({
       instanceKey,

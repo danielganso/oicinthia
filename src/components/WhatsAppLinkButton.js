@@ -24,17 +24,25 @@ export default function WhatsAppLinkButton({ professionalId, deviceId, onSuccess
   const [instanceExists, setInstanceExists] = useState(false);
   const countdownRef = useRef(null);
   
-  // Verificar se existe uma instância para este profissional
+  // Verificar se existe uma instância ativa para este profissional
   useEffect(() => {
     const checkInstance = async () => {
       if (professionalId) {
         try {
           const { data, error } = await supabase
             .from('evolution_instances')
-            .select('id')
+            .select('id, state')
             .eq('professional_id', professionalId);
             
-          setInstanceExists(data && data.length > 0);
+          // Considera que existe instância se há registro E o estado não é disconnected/close
+          const hasActiveInstance = data && data.length > 0 && 
+            data.some(instance => 
+              instance.state !== 'disconnected' && 
+              instance.state !== 'close' && 
+              instance.state !== null
+            );
+          
+          setInstanceExists(hasActiveInstance);
         } catch (error) {
           console.error('Erro ao verificar instância:', error);
           setInstanceExists(false);
@@ -55,6 +63,41 @@ export default function WhatsAppLinkButton({ professionalId, deviceId, onSuccess
     setIsModalOpen(true);
   };
   
+  // Função para desconectar WhatsApp antes de reconectar
+  const handleDisconnectBeforeReconnect = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sessão não encontrada');
+
+      const response = await fetch('/api/evolution/disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          professionalId
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        // Se a instância não existe (404), continuar normalmente
+        if (response.status !== 404) {
+          throw new Error(data.error || 'Erro ao desconectar WhatsApp');
+        }
+      }
+
+      console.log('WhatsApp desconectado com sucesso, prosseguindo com nova conexão...');
+      return true;
+    } catch (error) {
+      console.error('Erro ao desconectar WhatsApp:', error);
+      // Não bloquear o processo se a desconexão falhar
+      toast.warn('Aviso: Não foi possível desconectar a instância anterior. Prosseguindo com nova conexão...');
+      return true;
+    }
+  };
+
   // Função para salvar o número e iniciar o processo de vinculação
   const handleSaveNumber = async () => {
     if (!phoneNumber || phoneNumber.trim() === '') {
@@ -65,6 +108,12 @@ export default function WhatsAppLinkButton({ professionalId, deviceId, onSuccess
     setIsLoading(true);
     
     try {
+      // Se é uma reconexão (deviceId existe), desconectar primeiro
+      if (deviceId) {
+        console.log('Reconectando WhatsApp - desconectando instância anterior...');
+        await handleDisconnectBeforeReconnect();
+      }
+      
       // Formatar o número no formato solicitado: 557581823998@s.whatsapp.net
       let cleanNumber = phoneNumber.trim().replace(/\D/g, '');
       
@@ -437,6 +486,14 @@ export default function WhatsAppLinkButton({ professionalId, deviceId, onSuccess
                         {qrImage ? (
                           <div className="text-center">
                             <img src={qrImage} alt="QR Code para vincular WhatsApp" className="w-64 h-64 mx-auto" />
+                            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                              <p className="text-sm text-yellow-800 font-medium">
+                                ⏳ Aguarde o time processar a conexão...
+                              </p>
+                              <p className="text-xs text-yellow-600 mt-1">
+                                Após escanear o QR code, aguarde alguns segundos para a confirmação da conexão.
+                              </p>
+                            </div>
                             {countdownActive && (
                               <div className="mt-3 bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center mx-auto text-lg font-bold">
                                 {countdown}
